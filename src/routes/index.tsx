@@ -1,26 +1,22 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
+import { useStore } from "@/lib/store";
 
 export const Route = createFileRoute("/")({
-  component: Index,
+  beforeLoad: () => {
+    // Hydration is client-side; just redirect — login route handles unauth
+    if (typeof window !== "undefined") {
+      const raw = window.localStorage.getItem("eventflow-store");
+      try {
+        const parsed = raw ? JSON.parse(raw) : null;
+        if (parsed?.state?.user) throw redirect({ to: "/dashboard" });
+      } catch (e) {
+        if ((e as { isRedirect?: boolean }).isRedirect) throw e;
+      }
+    }
+    throw redirect({ to: "/login" });
+  },
+  component: () => null,
 });
 
-// IMPORTANT: Replace this placeholder. For sites with multiple pages (About, Services, Contact, etc.),
-// create separate route files (about.tsx, services.tsx, contact.tsx) — don't put all pages in this file.
-function PlaceholderIndex() {
-  return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
-  );
-}
-
-function Index() {
-  return <PlaceholderIndex />;
-}
+// Suppress unused warning
+void useStore;
